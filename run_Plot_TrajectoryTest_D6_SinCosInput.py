@@ -13,7 +13,7 @@ from AnalyticalModel import *
 import numpy as np
 
 
-
+Ref_Index = 36
 ################################################################################################################
 
 # define train and test path
@@ -64,7 +64,7 @@ test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
 
 
 
-legend_list = ['PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
+legend_list = ['PTM in ['+str(Ref_Index)+']', 'FDNNs with LfS', 'FDNNs with PKD']
 
 
 # plot predict error bar figures

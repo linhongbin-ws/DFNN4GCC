@@ -13,6 +13,7 @@ from AnalyticalModel import *
 import numpy as np
 import os
 
+Ref_Index = 36
 
 fk_model = FK_MODEL()
 ################################################################################################################
@@ -107,7 +108,7 @@ for i in range(3):
 
 paperFontSize = 14
 
-legend_list = ['PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
+legend_list = ['PTM in ['+str(Ref_Index)+']', 'FDNNs with LfS', 'FDNNs with PKD']
 
 #import matplotlib as mpl
 #mpl.style.use('seaborn')

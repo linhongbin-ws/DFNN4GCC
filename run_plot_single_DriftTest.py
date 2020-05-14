@@ -23,7 +23,7 @@ D = 6
 sample_idx = 20
 file_name_lst = ["analytical_model", "ReLU_Dual_UDirection_BP", "ReLU_Dual_UDirection_PKD"]
 
-
+Ref_Index = 36
 
 d_arr_lst = []
 theta_arr_lst = []
@@ -59,7 +59,7 @@ for file_name in file_name_lst:
 paperFontSize = 14
 paperLineWidth =2.5
 
-legend_list = ['PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
+legend_list = ['PTM in ['+str(Ref_Index)+']', 'FDNNs with LfS', 'FDNNs with PKD']
 
 
 fig, ax = plt.subplots(2, figsize=(6.7, 4))

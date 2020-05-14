@@ -25,6 +25,7 @@ from pathlib import Path
 
 # load Trajectory Test experiment data
 
+Ref_Index = 36
 
 def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec, BP_train_data_path):
     test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu',input_scaler=None, output_scaler=None,
@@ -174,9 +175,9 @@ for k in range(len(param_noise_scale_lst)):
     # fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
     #
     if k == 0:
-        legend_list = ['Low-bias PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
+        legend_list = ['Low-bias PTM in ['+str(Ref_Index)+']', 'FDNNs with LfS', 'FDNNs with PKD']
     else:
-        legend_list = ['High-bias PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
+        legend_list = ['High-bias PTM in ['+str(Ref_Index)+']', 'FDNNs with LfS', 'FDNNs with PKD']
 
     fill_color_list = ['tab:green', 'tab:orange', 'tab:blue']
     paperFontSize = 20
