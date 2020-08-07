@@ -14,6 +14,10 @@ import time
 
 from AnalyticalModel import *
 import pdb
+import json
+
+import time
+
 
 
 
@@ -32,7 +36,7 @@ class Controller():
     jnt_coup_limit_index = [1,2] # joint 2 and Joint 3
 
     ready_q_margin = np.radians(np.array([5,5,5,5,5,5]))
-    jnt_limit_check_margin =  np.radians(2)
+    jnt_limit_check_margin =  np.radians(0.1)
 
     safe_vel_limit = np.array([6,6,6,6,6,6,100])
     D = 6
@@ -52,10 +56,9 @@ class Controller():
 
 
     def __init__(self, MTM_ARM):
-
+        #pdb.set_trace()
         # define ros node
         rospy.init_node(MTM_ARM + 'GCC_controller', anonymous=True)
-
         self.MTM_ARM = MTM_ARM
 
         # define topics
@@ -70,19 +73,25 @@ class Controller():
         self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, latch = True, queue_size = 1)
         self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, latch = True, queue_size = 1)
         self.pub_set_position_joint = rospy.Publisher(self.set_position_joint_topic, JointState, latch = True, queue_size = 1)
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
+        # self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState)
 
 
 
         # shut down dvrk default GCC
         self.set_default_GCC_mode(False)
-        self.pub_zero_torques()
+        #self.pub_zero_torques()
 
         # define dvrk python api
         self.mtm_arm = dvrk.mtm(MTM_ARM)
 
         # keyboard shutdown function
         rospy.on_shutdown(self.shutdown)
+
+        # wait for ros communication
+        time.sleep(0.1)
+
+
 
 
     def load_gcc_model(self, model_type, load_model_path=None, use_net=None, train_type=None):
@@ -111,6 +120,8 @@ class Controller():
 
 
         self.isGCCRuning = True
+
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
 
         print("GCC start")
 
@@ -320,7 +331,8 @@ class Controller():
 
 
         self.mtm_arm.move_joint(jnt_pos_arr, interpolate = interpolate, blocking = blocking)
-        # print("moving to configuration", np.degrees(jnt_pos_arr))
+        print "Moving to the desired joint positions:"
+        print np.degrees(jnt_pos_arr)
         # time.sleep(0.5)
 
     def random_testing_configuration(self, sample_num):
@@ -365,6 +377,25 @@ class Controller():
         is_within_coup_upper_limit = (self.jnt_coup_upper_limit-limit_margin) >= q_arr[self.jnt_coup_limit_index[0]] + q_arr[self.jnt_coup_limit_index[1]]
 
         return all([is_within_lower_limit, is_within_upper_limit, is_within_coup_lower_limit, is_within_coup_upper_limit])
+
+    def load_jointLimit_json(self, json_file_str):
+        print 'loading file %s'%json_file_str
+        with open(json_file_str) as json_file:
+            data = json.load(json_file)
+            self.jnt_upper_limit = np.radians(data['joint_pos_upper_limit'])
+            self.jnt_lower_limit = np.radians(data['joint_pos_lower_limit'])
+            self.jnt_coup_upper_limit = np.radians(data['coupling_upper_limit'])
+            self.jnt_coup_lower_limit = np.radians(data['coupling_lower_limit'])
+
+        print 'Updating joint limits:'
+        print 'jnt_upper_limit:'
+        print data['joint_pos_upper_limit']
+        print 'jnt_lower_limit:'
+        print data['joint_pos_lower_limit']
+        print 'coupling_upper_limit:'
+        print data['coupling_upper_limit']
+        print 'coupling_lower_limit:'
+        print data['coupling_lower_limit']
 
 # # #
 # # # # # #
