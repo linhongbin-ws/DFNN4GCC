@@ -18,13 +18,13 @@ from Controller import Controller
 
 #####################################
 # settings
-MTM_ARM = 'MTML'
-SN = '41878'
+MTM_ARM = 'MTMR'
+SN = '31519'
 
 
 # controller_type = 'LfS' # Learn-from-Sratch approach
-controller_type = 'PKD' # Physical Knowledge Distillation
-# controller_type = 'PTM' # Physical Teacher Model
+#controller_type = 'PKD' # Physical Knowledge Distillation
+controller_type = 'PTM' # Physical Teacher Model
 
 
 

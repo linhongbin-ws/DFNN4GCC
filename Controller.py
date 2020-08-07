@@ -46,7 +46,7 @@ class Controller():
     isExceedSafeVel = False
     isOutputGCC = False
     isGCCRuning = False
-    isFloatingMode = False
+    #isFloatingMode = False
 
     FIFO_buffer_size = 1000
     FIFO_pos = np.zeros((FIFO_buffer_size,D))
@@ -64,15 +64,15 @@ class Controller():
         # define topics
         self.pub_tor_topic = '/dvrk/' + MTM_ARM + '/set_effort_joint'
         self.sub_pos_topic = '/dvrk/' + MTM_ARM + '/state_joint_current'
-        self.pub_isFloatMode_topic = '/dvrk/' + MTM_ARM + '/set_floating_mode'
+        #self.pub_isFloatMode_topic = '/dvrk/' + MTM_ARM + '/set_floating_mode'
         self.pub_isDefaultGCC_topic = '/dvrk/' + MTM_ARM + '/set_gravity_compensation'
-        self.set_position_joint_topic = '/dvrk/' + MTM_ARM + '/set_position_joint'
+        #self.set_position_joint_topic = '/dvrk/' + MTM_ARM + '/set_position_joint'
 
         # define publisher
         self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, latch = True, queue_size = 10)
-        self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, latch = True, queue_size = 1)
+        #self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, latch = True, queue_size = 1)
         self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, latch = True, queue_size = 1)
-        self.pub_set_position_joint = rospy.Publisher(self.set_position_joint_topic, JointState, latch = True, queue_size = 1)
+        #self.pub_set_position_joint = rospy.Publisher(self.set_position_joint_topic, JointState, latch = True, queue_size = 1)
         # self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
         self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState)
 
@@ -103,7 +103,7 @@ class Controller():
         else:
             raise Exception("model type is not support.")
 
-    def start_gc(self, isOutputGCC=True):
+    def start_gc(self):
 
         # check if model is assigned
         self.isExceedSafeVel = False
@@ -112,45 +112,38 @@ class Controller():
             print("you should load the model before call start_gc().")
             return 0
 
-        self.pub_zero_torques()
+
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
         self.set_isOutputGCC(True)
 
-        self.set_floating_mode(True)
-        self.isFloatingMode = True
 
 
         self.isGCCRuning = True
 
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
+
 
         print("GCC start")
 
 
     def stop_gc(self):
-        # clear pub torque buffer
-        #self.pub_zero_torques()
-
-        # set if output control torque
-
-        # pdb.set_trace()
-        self.set_floating_mode(False)
-        self.isFloatingMode = False
-        self.set_isOutputGCC(False)
-        self.pub_zero_torques()
-        time.sleep(1)
-
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState)
+        time.sleep(0.2)
         self.set_current_pos()
-        # self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb)
+
         self.isGCCRuning = False
 
         print("GCC stop...")
 
     def shutdown(self):
-        self.sub_pos = None
-        self.set_floating_mode(False)
-        self.isFloatingMode = False
-        time.sleep(1)
-        print("GCC Shutdown...")
+        try:
+            #self.set_isOutputGCC(False)
+            #self.pub_zero_torques()
+            self.sub_pos = None
+            time.sleep(0.2)
+            self.set_current_pos()
+        except:
+            print "ROS losses connection"
+        print "GCC Shutdown..."
 
     def update_isExceedSafeVel(self, vel_arr):
         abs_vel_arr = np.abs(vel_arr)
@@ -298,15 +291,15 @@ class Controller():
         self.move_MTM_joint(np.array(self.mtm_arm.get_current_joint_position()),
                             interpolate=False, blocking=True)
 
-    # publish topic: set_floating_mode
-    def set_floating_mode(self, is_enable):
-        msg = UInt8MultiArray()
-        if is_enable:
-            msg.data = [1, 1, 1, 1, 1, 1, 1]
-        else:
-            msg.data = [0, 0, 0, 0, 0, 0, 0]
-        self.pub_isFloatMode.publish(msg)
-        time.sleep(0.4)
+    # # publish topic: set_floating_mode
+    # def set_floating_mode(self, is_enable):
+    #     msg = UInt8MultiArray()
+    #     if is_enable:
+    #         msg.data = [1, 1, 1, 1, 1, 1, 1]
+    #     else:
+    #         msg.data = [0, 0, 0, 0, 0, 0, 0]
+    #     self.pub_isFloatMode.publish(msg)
+    #     time.sleep(0.4)
 
     # publish topic: set_gravity_compensation
     def set_default_GCC_mode(self, is_enable):
@@ -331,8 +324,7 @@ class Controller():
 
 
         self.mtm_arm.move_joint(jnt_pos_arr, interpolate = interpolate, blocking = blocking)
-        print "Moving to the desired joint positions:"
-        print np.degrees(jnt_pos_arr)
+        print "Moving joints to", np.degrees(jnt_pos_arr)
         # time.sleep(0.5)
 
     def random_testing_configuration(self, sample_num):
