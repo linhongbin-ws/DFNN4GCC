@@ -407,7 +407,8 @@ class MTM_MLSE4POL():
 
         gc_dynamic_params_arr = np.concatenate((gc_dynamic_params_pos_arr, gc_dynamic_params_neg_arr[10:]))
         self.param_vec = gc_dynamic_params_arr.reshape(70,1)
-        print("update param vector to :", self.param_vec)
+        #print("update param vector to :", self.param_vec)
+        print "finish loading: ", json_file_str
 
 
 # fk_model = FK_MODEL()

@@ -53,7 +53,7 @@ class Controller():
     FIFO_pos_cnt = 0
 
     current_pos_lst = None
-
+    a = 1
 
     def __init__(self, MTM_ARM):
         #pdb.set_trace()
@@ -74,7 +74,7 @@ class Controller():
         self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, latch = True, queue_size = 1)
         #self.pub_set_position_joint = rospy.Publisher(self.set_position_joint_topic, JointState, latch = True, queue_size = 1)
         # self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState)
+        #self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState)
 
 
 
@@ -126,23 +126,20 @@ class Controller():
 
 
     def stop_gc(self):
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState)
-        time.sleep(0.2)
-        self.set_current_pos()
-
+        self.sub_pos.unregister()
+        self.mtm_arm.move_joint(self.GC_init_pos_arr)
         self.isGCCRuning = False
 
         print("GCC stop...")
 
+
     def shutdown(self):
         try:
-            #self.set_isOutputGCC(False)
-            #self.pub_zero_torques()
-            self.sub_pos = None
-            time.sleep(0.2)
-            self.set_current_pos()
+            self.stop_gc()
         except:
             print "ROS losses connection"
+
+        self.isGCCRuning = False
         print "GCC Shutdown..."
 
     def update_isExceedSafeVel(self, vel_arr):
@@ -231,6 +228,8 @@ class Controller():
 
         self.update_FIFO_buffer(pos_arr)
 
+        #print('1')
+
         # elapsed = time.clock()
         # elapsed = elapsed - start
         # print "Time spent in (function name) is: ", elapsed
@@ -289,7 +288,7 @@ class Controller():
         #     self.pub_set_position_joint.publish(msg)
         # time.sleep(0.4)
         self.move_MTM_joint(np.array(self.mtm_arm.get_current_joint_position()),
-                            interpolate=False, blocking=True)
+                            interpolate=True, blocking=True)
 
     # # publish topic: set_floating_mode
     # def set_floating_mode(self, is_enable):
