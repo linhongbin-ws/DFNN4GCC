@@ -5,7 +5,7 @@ function safeCollisionCheck(config_mat_safeCheck, ARM_NAME)
 %     ARM_NAME = 'MTMR'
 %     SN = '31519'
 %     load_file = fullfile(desired_pivot_points_str)
-    mtm_arm = mtm(ARM_NAME)
+    mtm_arm = mtm(ARM_NAME);
 
     config_mat_safeCheck = config_mat_safeCheck(:, [2:2:end]); % skip checking Joint 6 for saving time
     for i = 1:size(config_mat_safeCheck, 2)

@@ -1,19 +1,27 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % modify the following setting for you dVRK
-ARM_NAME = 'MTML'
-SN = '41878'
+% ARM_NAME(str): 'MTML' or 'MTMR'
+% SN(SN): '12345' (for example)
+ARM_NAME = 'MTMR';
+SN = '12345';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% wizard program to identify the custom joint limits for specific MTM
+fprintf('running run_collectDatat program..\n')
+fprintf('ARM_NAME: %s\n', ARM_NAME)
+fprintf('SN: %s\n', SN)
+
+
+% A wizard program to identify the custom joint limits (to ensure MTM to move within your specific workspace)
 dataCollection_config_customized_str = wizard4JntLimit(ARM_NAME, SN);
 
 % generate pivot points for training data
-N_train = 4; % param for systematic sampling, 4 points for each joint.
+N_train = 4; % N is the sampling number for each joint, N=4 for our experiment
 [config_mat, config_mat_safeCheck] = generate_config_pivot_points_with_same_interval(dataCollection_config_customized_str, N_train);
 pivot_points_path_train = fullfile('data', [ARM_NAME,'_',SN], 'real', 'uniform', ['N', int2str(N_train)],'raw_data');
 if ~exist(pivot_points_path_train, 'dir')
    mkdir(pivot_points_path_train);
 end
+fprintf('saving pivot points for traing data..\n')
 save(fullfile(pivot_points_path_train, 'desired_pivot_points.mat'), 'config_mat' ,'N_train');
 
 % generate pivot points for validating data
@@ -23,6 +31,7 @@ pivot_points_path_validate = fullfile('data', [ARM_NAME,'_',SN], 'real', 'random
 if ~exist(pivot_points_path_validate, 'dir')
    mkdir(pivot_points_path_validate);
 end
+fprintf('saving pivot points for validating data..\n')
 save(fullfile(pivot_points_path_validate, 'desired_pivot_points.mat'), 'config_mat' ,'N_validate');
 
 % generate pivot points for testing data
@@ -32,17 +41,18 @@ pivot_points_path_test = fullfile('data', [ARM_NAME,'_',SN], 'real', 'random', [
 if ~exist(pivot_points_path_test, 'dir')
    mkdir(pivot_points_path_test);
 end
+fprintf('saving pivot points for testing data..\n')
 save(fullfile(pivot_points_path_test, 'desired_pivot_points.mat'), 'config_mat' ,'N_test');
 
-% collision checking for safety during data collection. 
-% It ensure MTM in long data collection process not to hit environment once it passes.
+% collision checking program ( to ensure MTM not to hit environment)
+fprintf('running collision checking program..\n')
 safeCollisionCheck(config_mat_safeCheck, ARM_NAME);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % % collect training data, about 4 hour.
 
-% in non-reverse order 
+% in non-reverse order, about 2 hour
 is_reverse = false;
 [current_position, desired_effort] = collect_data(ARM_NAME,...
                             fullfile(pivot_points_path_train, 'desired_pivot_points.mat'), is_reverse); % 2 hour
@@ -50,7 +60,7 @@ save_path = fullfile('data', [ARM_NAME, '_',SN], 'real', 'uniform', ['N',int2str
 save(fullfile(save_path, 'joint_pos'),'current_position');
 save(fullfile(save_path, 'joint_tor'),'desired_effort');
 
-% in reverse order
+% in reverse order, about 2 hour
 is_reverse = true;
 [current_position, desired_effort] = collect_data(ARM_NAME,...
                             fullfile(pivot_points_path_train, 'desired_pivot_points.mat'), is_reverse); % 2 hour
@@ -58,7 +68,7 @@ save_path = fullfile('data', [ARM_NAME, '_',SN], 'real', 'uniform', ['N',int2str
 save(fullfile(save_path, 'joint_pos_reverse'),'current_position');
 save(fullfile(save_path, 'joint_tor_reverse'),'desired_effort');
 
-% collect validating data
+% collect validating data, a couple minutes
 is_reverse = false;
 [current_position, desired_effort] = collect_data(ARM_NAME,...
                             fullfile(pivot_points_path_validate, 'desired_pivot_points.mat'), is_reverse); 
@@ -67,7 +77,7 @@ save(fullfile(save_path, 'joint_pos'),'current_position');
 save(fullfile(save_path, 'joint_tor'),'desired_effort');
 
 
-% collect testing data
+% collect testing data, a couple minutes
 is_reverse = false;
 [current_position, desired_effort] = collect_data(ARM_NAME,...
                             fullfile(pivot_points_path_test, 'desired_pivot_points.mat'), is_reverse); 
