@@ -16,7 +16,7 @@ from AnalyticalModel import *
 import pdb
 from Controller import Controller
 
-#####################################
+################### User Setting ##################
 # settings
 MTM_ARM = 'MTMR'
 SN = '31519'
@@ -26,6 +26,7 @@ SN = '31519'
 #controller_type = 'PKD' # Physical Knowledge Distillation
 controller_type = 'PTM' # Physical Teacher Model
 
+#####################################################################3
 
 
 use_net = 'ReLU_Dual_UDirection'
