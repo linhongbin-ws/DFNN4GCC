@@ -1,11 +1,35 @@
+import time
+import scipy.io
+import datetime
+
 from Controller import Controller
 import numpy as np
-import time
-import pdb
 from os.path import join
 import scipy.io
 import os
-import datetime
+
+
+MTM_ARM = 'MTMR'
+save_testing_point_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual")
+
+sample_num = 200
+D = 6
+
+controller = Controller(MTM_ARM)
+q_mat, ready_q_mat = controller.random_testing_configuration(sample_num)
+
+
+
+
+if not os.path.exists(save_testing_point_path):
+    os.makedirs(save_testing_point_path)
+
+
+
+file_name = "testing_points.mat"
+scipy.io.savemat(join(save_testing_point_path, file_name), {'q_mat': q_mat,
+                             'ready_q_mat': ready_q_mat})
+
 
 MTM_ARM = 'MTMR'
 use_net = 'ReLU_Dual_UDirection'

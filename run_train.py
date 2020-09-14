@@ -1,3 +1,4 @@
+from __future__ import print_function
 from regularizeTool import EarlyStopping
 from trainTool import train,KDtrain
 from loadDataTool import load_preProcessData
@@ -9,8 +10,10 @@ from loadModel import get_model, save_model
 from HyperParam import get_hyper_param
 from AnalyticalModel import *
 import scipy
-import time
-import datetime
+import sys
+import argparse
+
+
 def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None, is_sim = False, is_inputNormalized=True, is_outputNormalized=True,
               sim_distScale=None, simulation_param_path=None, load_PTM_param_file_str=None):
     param_dict = get_hyper_param(robot, train_type=train_type, is_sim=is_sim, sim_distScale = sim_distScale)
@@ -67,29 +70,6 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
                         max_training_epoch, goal_loss, param_dict['initLamda'], param_dict['endLamda'], param_dict['decayStepsLamda'], is_plot=False)
     else:
         raise Exception("cannot recoginze the train type")
-    #
-    # ### Get the predict output from test data and save to Matlab file
-    # train_dataset = load_data_dir(join(train_data_path,'data'), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
-    # train_input_mat = train_dataset.x_data
-    # train_output_mat = train_dataset.y_data
-    # model = model.to('cpu')
-    # test_dataset = load_data_dir(join(test_data_path,"data"), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
-    # test_input_mat = test_dataset.x_data
-    # test_output_mat = predict(model, test_input_mat, input_scaler, output_scaler)
-    # try:
-    #     mkdir(join(train_data_path,"result"))
-    # except:
-    #     print('Make directory: ', join(train_data_path,"result") + " already exist")
-    #
-    # # save data as .mat file
-    # save_result_path = join(train_data_path, "result", use_net+'.mat')
-    # print('Save result: ', save_result_path)
-    # sio.savemat(save_result_path, {'test_input_mat': test_input_mat.numpy(),
-    #                               'test_output_mat': test_output_mat.numpy(),
-    #                               'train_input_mat': train_input_mat.numpy(),
-    #                               'train_output_mat': train_output_mat.numpy()})
-    #
-    # test_loss, abs_rms_vec, rel_rms_vec = evaluate_rms(model, loss_fn, test_data_path, input_scaler, output_scaler, device, verbose=True)
 
     # save model to "result/model" folder
     test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
@@ -129,100 +109,53 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
     scipy.io.savemat(join(learning_curve_path, save_file_name), {'train_losses': train_losses,
                                                                  'valid_losses': valid_losses})
 
+    return abs_rms_vec, rel_rms_vec
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--arm', type=str, required=True, help="MTML or MTMR")
+    parser.add_argument('--sn', type=str, required=True, help="Serial Number: e.g. 28002")
+    args = parser.parse_args()
+
+    ARM_NAME = args.arm
+    SN = args.sn
+
+    if not (ARM_NAME == 'MTML' or ARM_NAME == 'MTMR'):
+        print('The first argument(arm)  should be either MTML or MTMR')
+        sys.exit()
+
+    if not (len(SN)==5):
+        print('The second argument(sn) should be a string with five number, e.g.: 28008')
+        sys.exit()
+
+    # #############################################################
+    #
+    load_PTM_param_file_str = join("data",  ARM_NAME+'_'+SN, "real", "gc-"+ARM_NAME+"-"+SN +".json")
+    train_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual")
+    valid_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random",  "N160", 'D6_SinCosInput')
+    test_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random", "N40",'D6_SinCosInput')
 
 
-################################################################################################################
-# uncomment to use
+    ###  train models
+    abs_rms_vec_dict = dict()
+    rel_rms_vec_dict = dict()
+    abs_rms_vec_dict['LFS'], rel_rms_vec_dict['LFS'] = loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTM', train_type='BP', valid_data_path=valid_data_path)
+    abs_rms_vec_dict['PKD'], rel_rms_vec_dict['PKD'] = loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTM', train_type='PKD', valid_data_path= valid_data_path, load_PTM_param_file_str = load_PTM_param_file_str)
+    print("")
+    print("")
+    print("")
+    print("")
+    print("")
 
-#################################################################################
-# train real MTM
+    print('===========train result==============')
+    print('ARMSE(Absolute Root Mean Square Error) and RMSE(Relative Root Mean Square Error) for Joint 1 to Joint 6 for {}_{}'.format(ARM_NAME, SN))
+    keys = abs_rms_vec_dict.keys()
+    for key in keys:
+        print('--------------------------------')
+        print('{} :', key)
+        for i in range(len(abs_rms_vec_dict[key])):
+            print("Joint {}: ARMSE({:.4f}), RRMSE({:.2f} %)".format(i+1, abs_rms_vec_dict[key][i], rel_rms_vec_dict[key][i]*100))
 
-################### User Setting ###############################
-ARM_NAME = "MTML"
-SN = "41878"
-#############################################################
-
-load_PTM_param_file_str = join("data",  ARM_NAME+'_'+SN, "real", "gc-"+ARM_NAME+"-"+SN +".json")
-train_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual")
-valid_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random",  "N160", 'D6_SinCosInput')
-test_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random", "N40",'D6_SinCosInput')
-
-
-
-
-###  train models
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTM', train_type='BP', valid_data_path=valid_data_path)
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTM', train_type='PKD', valid_data_path= valid_data_path, load_PTM_param_file_str = load_PTM_param_file_str)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=True, is_outputNormalized=False)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=False)
-
-
-#
-# ##################################################################################
-# # train sim MTM
-# sum_start_time = time.clock()
-#
-# train_simulate_num_list = [10, 50, 100,500,1000, 5000]
-# validate_simulate_num = 20000
-# test_simulate_num = 20000
-#
-# repetitive_num = 10
-# param_noise_scale_lst = [1e-3, 4e-3]
-# for k in range(len(param_noise_scale_lst)):
-#
-#     save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL', "bias_"+str(param_noise_scale_lst[k]))
-#
-#     test_data_path = join(save_dir, 'validate', 'N'+str(validate_simulate_num), 'D6_SinCosInput')
-#     valid_data_path = join(save_dir, 'test', 'N'+str(validate_simulate_num), 'D6_SinCosInput')
-#     for j in range(len(train_simulate_num_list)):
-#         for i in range(repetitive_num):
-#             loop_time = time.clock()
-#             print("train_simulate_num ", train_simulate_num_list[j], " repetitive no: ", i)
-#             train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num_list[j]), 'D6_SinCosInput', str(i+1))
-#             print("train BP")
-#             loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path,
-#                       sim_distScale = param_noise_scale_lst[k])
-#
-#             # print the time info
-#             loop_time = time.clock() - loop_time
-#             sum_time = time.clock() - sum_start_time
-#             total_num = len(train_simulate_num_list)*repetitive_num * len(param_noise_scale_lst)
-#             finish_num = i + j*repetitive_num + k*repetitive_num*len(train_simulate_num_list) + 0.5
-#             total_time = sum_time *  total_num / finish_num
-#             print("")
-#             print("*******************************")
-#             print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
-#                   "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
-#                   "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
-#                       datetime.timedelta(seconds=total_time)))
-#             print("*******************************")
-#             print("")
-#
-#             print("train PKD")
-#             loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD',
-#                       is_sim=True, valid_data_path=valid_data_path, sim_distScale = param_noise_scale_lst[k], simulation_param_path=save_dir)
-#
-#             # print the time info
-#             loop_time = time.clock() - loop_time
-#             sum_time = time.clock() - sum_start_time
-#             total_num = len(train_simulate_num_list)*repetitive_num * len(param_noise_scale_lst)
-#             finish_num = i + j * repetitive_num + k * repetitive_num * len(train_simulate_num_list) + 1
-#             total_time = sum_time * total_num / finish_num
-#             print("")
-#             print("*******************************")
-#             print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
-#                   "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
-#                   "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
-#                       datetime.timedelta(seconds=total_time)))
-#             print("*******************************")
-#             print("")
-#
-#
-#
-#
-#
-#
-#
-#
-#
+        print('Average for 6 Joints: ARMSE({:.4f}), RRMSE({:.2f} %)'.format(i+1, abs_rms_vec_dict[key].mean(), rel_rms_vec_dict[key].mean()*100))
