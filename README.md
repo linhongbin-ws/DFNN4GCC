@@ -42,7 +42,7 @@ cd DFNN4GCC
   addpath('<path to /dvrk-ros>')
   ```
 <br /> 
----
+======
 
 3. run `run_collect_train_data.m`, type following function with (1st argument `'MTML'` or `'MTMR'`, 2nd argument: 5digit of serial number, e.g. `'31519'`) in your matlab terminal according to your MTM,
 for example: 
@@ -50,7 +50,8 @@ for example:
 run_collect_train_data('MTMR', '31519')
 ```
 <br /> 
----
+======
+
 
 After this, the program will collect training, validating, testing data for a MTM. It take around **4** hours to finish the process. There are 4 subprocesses running in serial, `wizard program`, `generating pivot points`, `Collision Checking`, `data collection`, `data pre-processing`.
 
@@ -63,6 +64,8 @@ After this, the program will collect training, validating, testing data for a MT
 * `data collection`: Collecting data. It should take around 4+ hours. If you pass the `Collision Checking`, you no longer need to worry about that the MTM will hit environment during this 4 hours. You can do others work waiting the program.
 
 * `data pre-processing`: Pre-processing the raw data to trigonometric representation.
+<br /> 
+======
 
 4. copy the json file for the [analytical solution](https://github.com/jhu-dvrk/dvrk-gravity-compensation) to DFNN4GCC directory.
 In the terminal
@@ -75,11 +78,16 @@ for example:
     ```sh
     cp /home/ben/gc-MTMR-31519.json /home/ben/DFNN4GCC/data/MTMR_31519/real
     ```
+<br /> 
+======
+
 5. run `run_train.py` to train DFNN for Learn-from-Sratch(LfS) and Phyiscal-Knowledge-Distllation(PKD). Type in your terminal based on your MTM info, for example:
     ```sh
     chmod +x run_train.py
     python run_train.py --arm MTMR --sn 31519
     ```
+<br /> 
+======
 
 6. run `run_Controller.py` to run your GCC. Type in your terminal based on your MTM info and the controller(`LFS`, `PTM`, `PTM`) you want to evaluate, for example:
     ```sh
@@ -103,6 +111,8 @@ To reproduce the figure in our paper, you can type in terminal based on your MTM
 python ./plots/run_Plot_TrajectoryTest_D6_SinCosInput.py --arm MTMR --sn 31519
 ```
 and it will generate the following figure based your testing points. (Figure example: [link](https://github.com/linhongbin-ws/DFNN4GCC/blob/controller-evaluation/data/MTMR_28002/real/dirftTest/N4/D6_SinCosInput/dual/result/TrajTest_AbsRMS.pdf))
+<br /> 
+======
 
 ### 2.Drift Test
 run in terminal based your MTM info, for example
