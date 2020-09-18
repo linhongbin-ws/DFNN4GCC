@@ -2,6 +2,5 @@ scipy
 numpy
 scikit-learn
 torch
-matplotlib
-sys
+matplotlib >= 2.2.5
 argparse

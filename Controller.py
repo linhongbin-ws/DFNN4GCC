@@ -1,62 +1,50 @@
+from __future__ import print_function
 import rospy
 from sensor_msgs.msg import JointState
-
-from std_msgs.msg import UInt8MultiArray
-
 from std_msgs.msg import Bool
 import dvrk
-import numpy as np
-from os.path import join
-import torch
-from Net import *
 from loadModel import get_model, load_model
-import time
-
 from AnalyticalModel import *
-import pdb
 import json
-
 import time
+import os
 
 
 
 
 class Controller():
-    safe_upper_torque_limit_arr = np.array([0.2, 0.8, 0.6, 0.2, 0.2, 0.2, 0])
-    safe_lower_torque_limit_arr = np.array([-0.2, -0.1, 0, -0.3, -0.1, -0.1, 0])
-    db_vel_arr = np.array([0.02, 0.02, 0.02, 0.01, 0.008, 0.008, 0.01])
-    sat_vel_arr = np.array([0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2])
-    fric_comp_ratio_arr = np.array([0.7, 0.01, 0.5, 0.4, 0.2, 0.2, 1])
-    GC_init_pos_arr = np.radians(np.array([0, 0, 0, 0, 90, 0, 0]))
 
-    jnt_upper_limit = np.radians(np.array([40, 45, 34, 190, 175, 40]))
-    jnt_lower_limit = np.radians(np.array([-40, -14, -34, -80, -85, -40]))
-    jnt_coup_upper_limit = np.radians(41)
-    jnt_coup_lower_limit = np.radians(-11)
-    jnt_coup_limit_index = [1,2] # joint 2 and Joint 3
-
-    ready_q_margin = np.radians(np.array([5,5,5,5,5,5]))
+    # default controller settings
+    safe_upper_torque_limit_arr = np.array([0.2, 0.8, 0.6, 0.2, 0.2, 0.2, 0])    # saturate upper bound of output torques
+    safe_lower_torque_limit_arr = np.array([-0.2, -0.1, 0, -0.3, -0.1, -0.1, 0]) # saturate lower bound of output torques
+    db_vel_arr = np.array([0.02, 0.02, 0.02, 0.01, 0.008, 0.008, 0.01])          # dead band for velocity coefficients
+    sat_vel_arr = np.array([0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2])                  # saturated bound for velocity coefficients
+    fric_comp_ratio_arr = np.array([0.7, 0.01, 0.5, 0.4, 0.2, 0.2, 1])           # compensated ratio for friction compensation
+    GC_init_pos_arr = np.radians(np.array([0, 0, 0, 0, 90, 0, 0]))               # move MTM to initial pose when starting controller
+    jnt_upper_limit = np.radians(np.array([40, 45, 34, 190, 175, 40]))           # default upper joint limit
+    jnt_lower_limit = np.radians(np.array([-40, -14, -34, -80, -85, -40]))       # default lower joint limit
+    jnt_coup_upper_limit = np.radians(41)                                        # default upper couple joint limit
+    jnt_coup_lower_limit = np.radians(-11)                                       # default lower couple joint limit
+    jnt_coup_limit_index = [1,2]                                                 # joint 2 and Joint 3 as couple limit joints
+    ready_q_margin = np.radians(np.array([5,5,5,5,5,5]))                         # default joint margin for ready pose
     jnt_limit_check_margin =  np.radians(0.1)
+    safe_vel_limit = np.array([6,6,6,6,6,6,100])                                 # stop controller when joint velocity exceed such a velocity range
+    D = 6                                                                        # control Joint 1 to 6
+    device = 'cpu'                                                               # prediction use cpu in pytorch
+    verbose_silent_level = 0                                                     # 0 for print everything, 1 for print something, 2 for print nothing
 
-    safe_vel_limit = np.array([6,6,6,6,6,6,100])
-    D = 6
-    device = 'cpu'
+    # variables
     count = 0
     model = None
     isExceedSafeVel = False
     isOutputGCC = False
     isGCCRuning = False
-    #isFloatingMode = False
-
     FIFO_buffer_size = 1000
     FIFO_pos = np.zeros((FIFO_buffer_size,D))
     FIFO_pos_cnt = 0
-
     current_pos_lst = None
-    a = 1
 
     def __init__(self, MTM_ARM):
-        #pdb.set_trace()
         # define ros node
         rospy.init_node(MTM_ARM + 'GCC_controller', anonymous=True)
         self.MTM_ARM = MTM_ARM
@@ -64,23 +52,17 @@ class Controller():
         # define topics
         self.pub_tor_topic = '/dvrk/' + MTM_ARM + '/set_effort_joint'
         self.sub_pos_topic = '/dvrk/' + MTM_ARM + '/state_joint_current'
-        #self.pub_isFloatMode_topic = '/dvrk/' + MTM_ARM + '/set_floating_mode'
         self.pub_isDefaultGCC_topic = '/dvrk/' + MTM_ARM + '/set_gravity_compensation'
-        #self.set_position_joint_topic = '/dvrk/' + MTM_ARM + '/set_position_joint'
 
         # define publisher
         self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, latch = True, queue_size = 10)
-        #self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, latch = True, queue_size = 1)
         self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, latch = True, queue_size = 1)
-        #self.pub_set_position_joint = rospy.Publisher(self.set_position_joint_topic, JointState, latch = True, queue_size = 1)
-        # self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
-        #self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState)
+
 
 
 
         # shut down dvrk default GCC
         self.set_default_GCC_mode(False)
-        #self.pub_zero_torques()
 
         # define dvrk python api
         self.mtm_arm = dvrk.mtm(MTM_ARM)
@@ -112,35 +94,29 @@ class Controller():
             print("you should load the model before call start_gc().")
             return 0
 
-
         self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
         self.set_isOutputGCC(True)
-
-
-
         self.isGCCRuning = True
-
-
-
-        print("GCC start")
+        if self.verbose_silent_level == 0:
+            print("GCC start")
 
 
     def stop_gc(self):
         self.sub_pos.unregister()
         self.mtm_arm.move_joint(self.GC_init_pos_arr)
         self.isGCCRuning = False
-
-        print("GCC stop...")
+        if self.verbose_silent_level == 0:
+            print("GCC stop...")
 
 
     def shutdown(self):
         try:
             self.stop_gc()
         except:
-            print "ROS losses connection"
+            print("ROS losses connection")
 
         self.isGCCRuning = False
-        print "GCC Shutdown..."
+        print("GCC Shutdown...")
 
     def update_isExceedSafeVel(self, vel_arr):
         abs_vel_arr = np.abs(vel_arr)
@@ -150,8 +126,7 @@ class Controller():
                 break
             else:
                 self.isExceedSafeVel = False
-        # print("measuring vel: ", vel_arr)
-        # print("update_isExceedSafeVel: ", self.isExceedSafeVel)
+
 
     def pub_zero_torques(self):
         msg = JointState()
@@ -186,8 +161,6 @@ class Controller():
 
     def sub_pos_cb_with_gcc(self, data):
 
-        # test function collapse time
-        # start = time.clock()
 
         self.current_pos_lst = data.position
         pos_lst = data.position[:-1]  # select 1-6 joints
@@ -199,14 +172,6 @@ class Controller():
         effort_arr = np.array(effort_lst)
 
         tor_arr = self.predict(pos_arr, vel_arr)
-
-        # self.count += 1
-        # if (self.count == 50):
-        #     print('predict:', tor_arr)
-        #     print('measure:', effort_arr)
-        #     print('error:', tor_arr - effort_arr)
-        #     self.count = 0
-
         tor_arr = self.bound_tor(tor_arr)
 
 
@@ -224,19 +189,11 @@ class Controller():
             self.pub_tor.publish(msg)
 
         self.update_isExceedSafeVel(vel_arr)
-
-
         self.update_FIFO_buffer(pos_arr)
-
-        #print('1')
-
-        # elapsed = time.clock()
-        # elapsed = elapsed - start
-        # print "Time spent in (function name) is: ", elapsed
 
     # model predict function
     def clear_FIFO_buffer(self):
-        self.FIFO_pos = np.zeros((self.FIFO_buffer_size, self.D))
+        self.FIFO_pos = np.zeros((int(self.FIFO_buffer_size), self.D))
         self.FIFO_pos_cnt = 0
 
     def update_FIFO_buffer(self, pos_arr):
@@ -281,24 +238,9 @@ class Controller():
         return tor
 
     def set_current_pos(self):
-        # msg = JointState()
-        # for i in range(10):
-        #     msg.position = self.mtm_arm.get_current_joint_position()
-        #     # print(msg.position)
-        #     self.pub_set_position_joint.publish(msg)
-        # time.sleep(0.4)
         self.move_MTM_joint(np.array(self.mtm_arm.get_current_joint_position()),
                             interpolate=True, blocking=True)
 
-    # # publish topic: set_floating_mode
-    # def set_floating_mode(self, is_enable):
-    #     msg = UInt8MultiArray()
-    #     if is_enable:
-    #         msg.data = [1, 1, 1, 1, 1, 1, 1]
-    #     else:
-    #         msg.data = [0, 0, 0, 0, 0, 0, 0]
-    #     self.pub_isFloatMode.publish(msg)
-    #     time.sleep(0.4)
 
     # publish topic: set_gravity_compensation
     def set_default_GCC_mode(self, is_enable):
@@ -323,7 +265,8 @@ class Controller():
 
 
         self.mtm_arm.move_joint(jnt_pos_arr, interpolate = interpolate, blocking = blocking)
-        print "Moving joints to", np.degrees(jnt_pos_arr)
+        if self.verbose_silent_level == 0:
+            print("Moving MTM to desired jnt position: " + ', '.join("{:.1f}".format(ang) for ang in np.degrees(jnt_pos_arr).tolist()))
         # time.sleep(0.5)
 
     def random_testing_configuration(self, sample_num):
@@ -370,7 +313,11 @@ class Controller():
         return all([is_within_lower_limit, is_within_upper_limit, is_within_coup_lower_limit, is_within_coup_upper_limit])
 
     def load_jointLimit_json(self, json_file_str):
-        print 'loading file %s'%json_file_str
+        if not os.path.isfile(json_file_str):
+            print("cannot find {}".format(json_file_str))
+            return False
+
+        print('loading file {}'.format(json_file_str))
         with open(json_file_str) as json_file:
             data = json.load(json_file)
             self.jnt_upper_limit = np.radians(data['joint_pos_upper_limit'])
@@ -378,15 +325,17 @@ class Controller():
             self.jnt_coup_upper_limit = np.radians(data['coupling_upper_limit'])
             self.jnt_coup_lower_limit = np.radians(data['coupling_lower_limit'])
 
-        print 'Updating joint limits:'
-        print 'jnt_upper_limit:'
-        print data['joint_pos_upper_limit']
-        print 'jnt_lower_limit:'
-        print data['joint_pos_lower_limit']
-        print 'coupling_upper_limit:'
-        print data['coupling_upper_limit']
-        print 'coupling_lower_limit:'
-        print data['coupling_lower_limit']
+        print('Updating joint limits:',end='\n')
+        print('jnt_upper_limit:', end='')
+        print(', '.join('{}'.format(k) for k in data['joint_pos_upper_limit']))
+        print('jnt_lower_limit:', end='')
+        print(', '.join('{}'.format(k) for k in data['joint_pos_lower_limit']))
+        print('coupling_upper_limit:', end='')
+        print(data['coupling_upper_limit'])
+        print('coupling_lower_limit:', end='')
+        print(data['coupling_lower_limit'])
+
+        return True
 
 # # #
 # # # # # #
