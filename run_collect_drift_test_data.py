@@ -52,6 +52,7 @@ if __name__ == '__main__':
 
 
     for k, test_controller in enumerate(test_controller_list):
+        print("*********************")
         print("evaluate controller: {} ({}/{})".format(test_controller, k+1, len(test_controller_list)))
         ######################################################
         if test_controller == 'LFS':
@@ -104,9 +105,9 @@ if __name__ == '__main__':
             controller.move_MTM_joint(ready_q_mat[i,:])
             time.sleep(0.3) # wait until arm stable
             controller.move_MTM_joint(q_mat[i,:])
-            time.sleep(0.3) # wait until arm stable
+            time.sleep(0.6) # wait until arm stable
             controller.clear_FIFO_buffer()
-            print("   #### testing controller:{} in config:{}/{}".format(test_controller, i+1, sample_num), end='')
+            print("   #### testing controller:({}) in config:({}/{})".format(test_controller, i+1, sample_num), end='')
 
             isExceedSafeVel = False
             gcc_time = time.clock()
