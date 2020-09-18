@@ -34,17 +34,23 @@ cd DFNN4GCC
   qlacloserelays
   rosrun dvrk_robot dvrk_console_json -j <path-to-your-MTM-json-file>
   ```
+<br /> 
+---
 2. open Matlab. Go to the "DFNN4GCC" directory. Type in the command line
   ```
   rosinit
   addpath('<path to /dvrk-ros>')
   ```
+<br /> 
+---
 
 3. run `run_collect_train_data.m`, type following function with (1st argument `'MTML'` or `'MTMR'`, 2nd argument: 5digit of serial number, e.g. `'31519'`) in your matlab terminal according to your MTM,
 for example: 
 ```Matlab
 run_collect_train_data('MTMR', '31519')
 ```
+<br /> 
+---
 
 After this, the program will collect training, validating, testing data for a MTM. It take around **4** hours to finish the process. There are 4 subprocesses running in serial, `wizard program`, `generating pivot points`, `Collision Checking`, `data collection`, `data pre-processing`.
 
