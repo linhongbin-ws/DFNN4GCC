@@ -111,7 +111,7 @@ run_collect_traj_test_data('MTMR', '31519', 400)
 
 To reproduce the figure in our paper, you can type in terminal based on your MTM info, for example
 ```
-python ./plots/run_Plot_TrajectoryTest_D6_SinCosInput.py --arm MTMR --sn 31519
+python run_plot_trajectoryTest_D6_SinCosInput.py --arm MTMR --sn 31519 --sample_num 200
 ```
 and it will generate the following figure based your testing points. (Figure example: [link](https://github.com/linhongbin-ws/DFNN4GCC/blob/controller-evaluation/data/MTMR_28002/real/dirftTest/N4/D6_SinCosInput/dual/result/TrajTest_AbsRMS.pdf))
 
@@ -127,7 +127,7 @@ python run_collect_drift_test_data.py --arm MTMR --sn 31519 --sample_num 200
 
 To reproduce the figure in our paper, you can type in terminal based on your MTM info, for example
 ```
-python ./plots/run_Plot_DriftTest_D6_SinCosInput.py --arm MTMR --sn 31519
+python run_plot_driftTest_D6_SinCosInput.py --arm MTMR --sn 31519
 ```
 and it will generate the following figure based your testing points. (Figure example: [link](https://github.com/linhongbin-ws/DFNN4GCC/blob/controller-evaluation/data/MTMR_31519/real/dirftTest/N4/D6_SinCosInput/dual/result/DriftTest_all.pdf))
 

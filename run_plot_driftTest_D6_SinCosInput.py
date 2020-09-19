@@ -1,11 +1,12 @@
 from os.path import join
 import scipy.io as sio
 import matplotlib
+import os
+import sys
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from AnalyticalModel import *
 import numpy as np
-import os
 import argparse
 
 if __name__ == '__main__':
@@ -17,7 +18,6 @@ if __name__ == '__main__':
     SN = args.sn
 
     Ref_Index = 36
-    os.chdir('..')
     fk_model = FK_MODEL()
     ################################################################################################################
     save_pdf_path = join("data", ARM_NAME + '_' + SN, "real", "dirftTest", "N4", 'D6_SinCosInput', "dual",'result')

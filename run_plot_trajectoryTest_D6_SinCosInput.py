@@ -19,19 +19,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--arm', type=str, required=True, help="MTML or MTMR")
     parser.add_argument('--sn', type=str, required=True, help="Serial Number: e.g. 28002")
+    parser.add_argument('--sample_num', type=int, required=True, help="sampling number of testing data points")
     args = parser.parse_args()
     ARM_NAME = args.arm
     SN = args.sn
+    sample_num = args.sample_num
 
 
-    os.chdir('..')
     Ref_Index = 36
     ################################################################################################################
 
 
     # define train and test path
-    train_data_path = join(".","data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
-    test_data_path = join(".","data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
+    train_data_path = join(".","data", ARM_NAME + '_' + SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual")
+    test_data_path = join(".","data", ARM_NAME + '_' + SN, "real", "random", 'N'+str(sample_num),'D6_SinCosInput')
 
     # load Trajectory Test experiment data
     test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu',input_scaler=None, output_scaler=None,
