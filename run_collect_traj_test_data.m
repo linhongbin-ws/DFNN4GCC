@@ -13,8 +13,6 @@ function run_collect_traj_test_data(ARM_NAME, SN, N_traj_test)
         return
     end
     
-    setup_matlab;
-    
     % generate pivot points for validating data
     config_mat = generate_config_pivot_points_random(dataCollection_config_customized_str, N_traj_test);
     pivot_points_path_validate = fullfile('data', [ARM_NAME,'_',SN], 'real', 'random', ['N', int2str(N_traj_test)] ,'raw_data');
