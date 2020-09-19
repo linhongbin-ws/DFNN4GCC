@@ -47,13 +47,15 @@ if __name__ == '__main__':
                                  'ready_q_mat': ready_q_mat})
 
     test_controller_list = ['PTM', 'LFS', 'PKD']
+    #test_controller_list = ['PTM'] # uncomment this line if you only want to collect dirft test data for only one controller
+
     print(" ")
     print("========================================")
 
 
     for k, test_controller in enumerate(test_controller_list):
-        print("*********************")
-        print("evaluate controller: {} ({}/{})".format(test_controller, k+1, len(test_controller_list)))
+        #print("*********************")
+        #print("evaluate controller: {} ({}/{})".format(test_controller, k+1, len(test_controller_list)))
         ######################################################
         if test_controller == 'LFS':
             train_type = 'BP'

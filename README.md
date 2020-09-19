@@ -1,8 +1,15 @@
 # Deep Learning for Gravity Compensation using physical knowledge distillation
 
-## overview
+## Overview
 
 * Codes for paper, *Learning Deep Nets for Gravitational Dynamics with Disturbance through Physical Knowledge Distillation*
+
+## Features
+
+- Data collection in Master Too Manipulator (MTM) of dVRK 
+- Train deep neural network model for Gravity Compensation Controller (GCC) in MTM using pytorch
+- GCC in MTM
+- Evaluation experiments for GCC in MTM
 
 ## Requirement
 * Ubuntu OS
@@ -13,15 +20,11 @@
 ## Installation
 1. Install [dVRK](https://github.com/jhu-cisst/cisst/wiki/Compiling-cisst-and-SAW-with-CMake#13-building-using-catkin-build-tools-for-ros).
 2. Implement the [analytical solution](https://github.com/jhu-dvrk/dvrk-gravity-compensation) of GCC for dVRK (To obtain a Physical Teacher Model).
-3. Install required Python packages
-```sh
-cd DFNN4GCC
-pip install requirements.txt
-```
-4. Install DFNN4GCC
+3. Install DFNN4GCC and install python packages
 ```sh
 git clone https://github.com/linhongbin-ws/DFNN4GCC
 cd DFNN4GCC
+pip install -r requirements.txt
 ```
 
 ## Run
@@ -100,10 +103,10 @@ for example:
 ## Experiment Evaluation (Optional)
 This part of code is to reproduce experiments (Trajectory Test and Drift Test) in our paper. 
 
-### 1.Trajectory Test
-run in matlab terminal based your MTM info, for example
+### 1.Trajectory Test (offline test)
+run in matlab terminal based your MTM info and sampling points number for experiment, for example
 ```Matlab
-run_collect_traj_test_data('MTMR', '31519')
+run_collect_traj_test_data('MTMR', '31519', 400)
 ```
 
 To reproduce the figure in our paper, you can type in terminal based on your MTM info, for example
@@ -111,17 +114,38 @@ To reproduce the figure in our paper, you can type in terminal based on your MTM
 python ./plots/run_Plot_TrajectoryTest_D6_SinCosInput.py --arm MTMR --sn 31519
 ```
 and it will generate the following figure based your testing points. (Figure example: [link](https://github.com/linhongbin-ws/DFNN4GCC/blob/controller-evaluation/data/MTMR_28002/real/dirftTest/N4/D6_SinCosInput/dual/result/TrajTest_AbsRMS.pdf))
+
+(*For Trajectory test, the program will collect data in random configurations and save them to mat files for offline evaluation. For each testing point, the program will first move MTM to a ready configuration and then move to desired configuration. The reason for this is to test how the controller react to direction-depedent disturbance mainly causing by hystestic effect from cables.*)
 <br /> 
 
 
-### 2.Drift Test
-run in terminal based your MTM info, for example
+### 2.Drift Test (online test)
+run in terminal based your MTM info and sampling points for experiments, for example
 ```sh
-python run_collect_drift_test_data.py --arm MTMR --sn --sample_num 200
+python run_collect_drift_test_data.py --arm MTMR --sn 31519 --sample_num 200
 ```
 
 To reproduce the figure in our paper, you can type in terminal based on your MTM info, for example
 ```
 python ./plots/run_Plot_DriftTest_D6_SinCosInput.py --arm MTMR --sn 31519
 ```
-and it will generate the following figure based your testing points. (Figure example: [link](https://github.com/linhongbin-ws/DFNN4GCC/blob/controller-evaluation/data/MTMR_28002/real/dirftTest/N4/D6_SinCosInput/dual/result/TrajTest_AbsRMS.pdf))
+and it will generate the following figure based your testing points. (Figure example: [link](https://github.com/linhongbin-ws/DFNN4GCC/blob/controller-evaluation/data/MTMR_31519/real/dirftTest/N4/D6_SinCosInput/dual/result/DriftTest_all.pdf))
+
+*(For drift test, it will take one hour for each controller and the program will test 3 controller automatically for 3 hour in total. For each testing point, the program will first move to a ready configuration and then move to desired configuration. The reason is the same with the one of Trajectory Test. Afteward the controller will switch from PID to feedfoward GCC for about 2 seconds. Joint drifts are recorded. Then the program will switch back to PID controller to move to next testing point. In some extreme cases that makes the MTM move too fast under evaluated GCC, the program will switch back to PID if the joint velocity exceed limits to prevent damages to a MTM.)*
+
+If you stop the program during the process and want to restart it and only want to collect a specific controller without going through re-collecting 3 controllers. You can go to python script `run_Plot_DriftTest_D6_SinCosInput.py` and uncomment and change the following line
+```python
+    test_controller_list = ['PTM', 'LFS', 'PKD']
+    #test_controller_list = ['PTM'] # uncomment this line if you only want to collect dirft test data for only one controller
+```
+
+## Data Sharing
+Since our program can be reproduced in MTMs for a general dVRK system, it is encourage to sharing your data to dVRK community for further research analysis (such as study on transfer learning to further reduce the required amount of training data.)
+
+To push the data for your dVRK system to our github repository, just type in terminal
+```sh
+git add ./data/your-system-folder/*
+git commit -m `add <MTM Name>_<Serial Number>`
+git push
+```
+

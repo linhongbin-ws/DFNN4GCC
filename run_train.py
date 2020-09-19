@@ -154,8 +154,8 @@ if __name__ == '__main__':
     keys = abs_rms_vec_dict.keys()
     for key in keys:
         print('--------------------------------')
-        print('{} :', key)
+        print('{} :'.format(key))
         for i in range(len(abs_rms_vec_dict[key])):
             print("Joint {}: ARMSE({:.4f}), RRMSE({:.2f} %)".format(i+1, abs_rms_vec_dict[key][i], rel_rms_vec_dict[key][i]*100))
 
-        print('Average for 6 Joints: ARMSE({:.4f}), RRMSE({:.2f} %)'.format(i+1, abs_rms_vec_dict[key].mean(), rel_rms_vec_dict[key].mean()*100))
+        # print('Average for 6 Joints: ARMSE({:.4f}), RRMSE({:.2f} %)'.format(i+1, abs_rms_vec_dict[key].mean(), rel_rms_vec_dict[key].mean()*100))
