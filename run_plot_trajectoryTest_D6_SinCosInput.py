@@ -187,3 +187,9 @@ if __name__ == '__main__':
 
     print('Avg Absolute RMSE: ',[lst[-1] for lst in abs_rms_list])
     print('Avg Relative RMSE: ',[lst[-1] for lst in rel_rms_list])
+
+    output_list = [lst[-1] for lst in rel_rms_list]
+    print("latex:")
+    print("{:.1f} &".format(output_list[0]), end=' ')
+    print("{:.1f} &".format(output_list[1]), end=' ')
+    print("{:.1f} &".format(output_list[2]), end=' ')

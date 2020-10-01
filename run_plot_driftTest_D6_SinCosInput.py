@@ -39,6 +39,7 @@ if __name__ == '__main__':
         max_arr_lst = []
         min_arr_lst = []
         for file_name in file_name_lst:
+            print("loading file: {}".format(join(drift_test_result_path,file_name)))
             drift_pos_tensor = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_tensor']
             drift_pos_cnt_arr = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_cnt_arr']
             sample_num = drift_pos_tensor.shape[2]
@@ -107,6 +108,25 @@ if __name__ == '__main__':
     #
     #print(mean_arr_lst)
 
+    print("=========================================")
+    print("mean (max) result for translational drifts")
+    print("PTM: {:.1f} ({:.1f})".format(mean_arr_result_lst[0][-2],max_arr_result_lst[0][-2]),end=' ')
+    print("LFS: {:.1f} ({:.1f})".format(mean_arr_result_lst[1][-2],max_arr_result_lst[1][-2]),end=' ')
+    print("PKD: {:.1f} ({:.1f})".format(mean_arr_result_lst[2][-2],max_arr_result_lst[2][-2]))
+    print("latex:")
+    print("{:.1f} ({:.1f}) &".format(mean_arr_result_lst[0][-2], max_arr_result_lst[0][-2]), end=' ')
+    print("{:.1f} ({:.1f}) &".format(mean_arr_result_lst[1][-2], max_arr_result_lst[1][-2]), end=' ')
+    print("\\bf{{ {:.1f} ({:.1f}) }}".format(mean_arr_result_lst[2][-2], max_arr_result_lst[2][-2]))
+
+    print("------")
+    print("mean (max) result for rotational drifts")
+    print("PTM: {:.1f} ({:.1f})".format(mean_arr_result_lst[0][-1],max_arr_result_lst[0][-1]),end=' ')
+    print("LFS: {:.1f} ({:.1f})".format(mean_arr_result_lst[1][-1],max_arr_result_lst[1][-1]),end=' ')
+    print("PKD: {:.1f} ({:.1f})".format(mean_arr_result_lst[2][-1],max_arr_result_lst[2][-1]))
+    print("latex:")
+    print("{:.1f} ({:.1f}) &".format(mean_arr_result_lst[0][-1], max_arr_result_lst[0][-1]), end=' ')
+    print("{:.1f} ({:.1f}) &".format(mean_arr_result_lst[1][-1], max_arr_result_lst[1][-1]), end=' ')
+    print("\\bf{{ {:.1f} ({:.1f}) }}".format(mean_arr_result_lst[2][-1], max_arr_result_lst[2][-1]))
 
 
 
@@ -173,7 +193,7 @@ if __name__ == '__main__':
         os.makedirs(save_pdf_path)
 
 
-    fig.savefig(join(save_pdf_path,'DriftTest_all.pdf'),bbox_inches='tight')
+    #fig.savefig(join(save_pdf_path,'DriftTest_all.pdf'),bbox_inches='tight')
 
     #
     #
@@ -209,3 +229,5 @@ if __name__ == '__main__':
     #
     # print('Avg Absolute RMSE: ',[lst[-1] for lst in abs_rms_list])
     # print('Avg Relative RMSE: ',[lst[-1] for lst in rel_rms_list])
+
+
