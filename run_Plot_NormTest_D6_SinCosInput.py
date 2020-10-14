@@ -12,7 +12,9 @@ import matplotlib.pyplot as plt
 from AnalyticalModel import *
 import numpy as np
 
-
+import matplotlib
+# matplotlib.rcParams['pdf.fonttype'] = 42
+# matplotlib.rcParams['ps.fonttype'] = 42
 
 ################################################################################################################
 
@@ -160,7 +162,8 @@ plt.xticks(fontsize=paperFontSize)
 plt.yticks(fontsize=paperFontSize)
 plt.tight_layout()
 plt.show()
-fig.savefig(join(train_data_path, "result",'NormTest_RelRMS.pdf'),bbox_inches='tight')
+matplotlib.rcParams['pdf.fonttype'] = 42
+fig.savefig(join('.','NormTest_RelRMS.pdf'),bbox_inches='tight')
 
 
 print('Avg Absolute RMSE: ',[lst[-1] for lst in abs_rms_list])

@@ -12,8 +12,10 @@ import matplotlib.pyplot as plt
 from AnalyticalModel import *
 import numpy as np
 import os
-
-
+import matplotlib
+# matplotlib.rcParams['pdf.fonttype'] = 42
+# matplotlib.rcParams['ps.fonttype'] = 42
+# matplotlib.rcParams['pdf.fonttype'] = 42
 fk_model = FK_MODEL()
 ################################################################################################################
 save_pdf_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual",'result')
@@ -23,7 +25,7 @@ D = 6
 sample_idx = 20
 file_name_lst = ["analytical_model", "ReLU_Dual_UDirection_BP", "ReLU_Dual_UDirection_PKD"]
 
-Ref_Index = 36
+Ref_Index = 30
 
 d_arr_lst = []
 theta_arr_lst = []
@@ -122,7 +124,10 @@ if not os.path.exists(save_pdf_path):
     os.makedirs(save_pdf_path)
 
 
-fig.savefig(join(save_pdf_path,'DriftTest_single.pdf'),bbox_inches='tight')
+#matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['pdf.fonttype'] = 42
+
+fig.savefig(join('.','DriftTest_single.pdf'),bbox_inches='tight')
 
 #
 #

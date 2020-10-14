@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 from AnalyticalModel import *
 import numpy as np
 import os
-
-Ref_Index = 36
+import matplotlib
+Ref_Index = 30
 
 fk_model = FK_MODEL()
 ################################################################################################################
@@ -168,8 +168,8 @@ plt.show()
 if not os.path.exists(save_pdf_path):
     os.makedirs(save_pdf_path)
 
-
-fig.savefig(join(save_pdf_path,'DriftTest_all.pdf'),bbox_inches='tight')
+matplotlib.rcParams['pdf.fonttype'] = 42
+fig.savefig(join('.','DriftTest_all.pdf'),bbox_inches='tight')
 
 #
 #

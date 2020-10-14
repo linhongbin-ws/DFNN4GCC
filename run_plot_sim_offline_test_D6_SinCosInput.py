@@ -14,7 +14,9 @@ from AnalyticalModel import *
 import numpy as np
 import scipy.io as sio
 from pathlib import Path
-
+import matplotlib
+# matplotlib.rcParams['pdf.fonttype'] = 42
+# matplotlib.rcParams['ps.fonttype'] = 42
 
 
 ################################################################################################################
@@ -25,7 +27,7 @@ from pathlib import Path
 
 # load Trajectory Test experiment data
 
-Ref_Index = 36
+Ref_Index = 30
 
 def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec, BP_train_data_path):
     test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu',input_scaler=None, output_scaler=None,
@@ -227,7 +229,8 @@ for k in range(len(param_noise_scale_lst)):
     plt.show()
     save_dir = join(root_path, 'train', "result")
     Path(save_dir).mkdir(parents=True, exist_ok=True)
-    fig.savefig(join(save_dir,'Dist_'+simulate_type+'_'+str(param_noise_scale_lst[k])+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
+    matplotlib.rcParams['pdf.fonttype'] = 42
+    fig.savefig(join('.','Dist_'+simulate_type+'_'+str(param_noise_scale_lst[k])+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 
 
 

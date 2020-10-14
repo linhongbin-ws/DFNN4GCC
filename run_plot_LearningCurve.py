@@ -11,7 +11,9 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from AnalyticalModel import *
 import numpy as np
-
+import matplotlib
+# matplotlib.rcParams['pdf.fonttype'] = 42
+# matplotlib.rcParams['ps.fonttype'] = 42
 
 
 ################################################################################################################
@@ -102,5 +104,5 @@ plt.show()
 # if not os.path.exists(save_pdf_path):
 #     os.makedirs(save_pdf_path)
 
-
-fig.savefig(join(data_path,'ReLU_Dual_UDirection_PKD_learnCurve.pdf'),bbox_inches='tight')
+matplotlib.rcParams['pdf.fonttype'] = 42
+fig.savefig(join('.','ReLU_Dual_UDirection_PKD_learnCurve.pdf'),bbox_inches='tight')
